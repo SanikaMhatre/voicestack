@@ -10,7 +10,11 @@ For anyone using the demo page. (Developers: see `TECHNICAL_DOCUMENTATION.md`.)
 The page has three tabs: **Customer**, **Shop owner**, **Developer**. The drop-down at the top chooses which shop you are working with.
 
 ## A two-minute tour
+<<<<<<< HEAD
 1. **Shop owner** tab → **Load 3 sample shops (demo)**. It adds only shops that are missing, so pressing it again creates no duplicates.
+=======
+1. **Shop owner** tab → **Load 3 sample shops (demo)**.
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 2. **Customer** tab → tap a suggestion such as *kal shaam 5 baje haircut*.
 3. The assistant reads the appointment back and holds it for 2 minutes. Press **Yes, confirm**. A receipt appears.
 4. Press **Another customer wants this slot**: a second person is refused and joins the waitlist.
@@ -46,7 +50,10 @@ Stop the server (Ctrl+C), delete the `voicestack.db` file in the project folder,
 ## If something looks wrong
 | You see | Do this |
 |---|---|
+<<<<<<< HEAD
 | "Too many wrong approval codes" | Five wrong codes lock a draft. Extract the draft again to get a new one |
+=======
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 | A red banner about an OLD server | Stop the old server, start from the new folder, press Ctrl+Shift+R |
 | No shops in the list | Shop owner tab → Load 3 sample shops, or publish your own |
 | The mic is missing or mishears | Use Chrome; or type |

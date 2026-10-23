@@ -236,7 +236,11 @@
       <label for="bdesc">Paste a message describing your services and hours</label>
       <textarea id="bdesc" rows="3">haircut 300 30min, beard 150 60min, open 10-8, closed sunday</textarea>
       <div class="row"><label style="margin:0" for="bchairs">Chairs</label><input id="bchairs" type="number" min="1" max="10" value="1" style="width:70px"></div>
+<<<<<<< HEAD
       <div class="row" style="margin-top:8px"><button id="draft">Extract draft</button><button id="seed" class="alt sm">Load 3 sample shops (demo; adds only once, never duplicates)</button></div>
+=======
+      <div class="row" style="margin-top:8px"><button id="draft">Extract draft</button><button id="seed" class="alt sm">Load 3 sample shops (demo)</button></div>
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
       <div id="preview" hidden>
         <p class="note" style="margin-top:12px"><b>Draft preview</b> — customers cannot book yet. Check it, edit the message above and extract again if anything is wrong, then publish.</p>
         <div class="tablewrap"><table id="ptable"></table></div>
@@ -341,7 +345,10 @@ async function rpc(method, params) {
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-11-25' },
     body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method, params }) });
   const j = await res.json();
+<<<<<<< HEAD
   if (res.status === 429) banner('Too many requests from this browser. Wait a minute and try again.');
+=======
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
   if (j.error) throw new Error(j.error.message);
   return j.result;
 }
@@ -372,7 +379,10 @@ async function api(path, opts) {
   let res;
   try { res = await fetch(path, opts); } catch (e) { banner('Cannot reach the VoiceStack server. Is it still running in your terminal?'); throw e; }
   const type = res.headers.get('content-type') || '';
+<<<<<<< HEAD
   if (res.status === 429) { banner('Too many requests from this browser. Wait a minute and try again.'); throw new Error('rate limited'); }
+=======
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
   if (!res.ok || !type.includes('json')) {
     banner(`The server answered ${res.status} for ${path}. You are probably running an OLD copy of the server. Stop it (Ctrl+C), open the NEW voicestack folder, and run: python -m voicestack.server`);
     throw new Error('bad response ' + path);

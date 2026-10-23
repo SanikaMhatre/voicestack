@@ -17,15 +17,21 @@ from zoneinfo import ZoneInfo
 IST = ZoneInfo("Asia/Kolkata")
 UNIT = 30  # minutes; the smallest bookable block
 HOLD_TTL_SECONDS = 120
+<<<<<<< HEAD
 MAX_APPROVE_FAILS = 5  # wrong approve codes allowed per draft before it is locked
+=======
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS business(
   id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL,
   approve_code TEXT NOT NULL, open_min INTEGER NOT NULL, close_min INTEGER NOT NULL,
   closed_days TEXT NOT NULL, resources INTEGER NOT NULL, created TEXT NOT NULL);
+<<<<<<< HEAD
 CREATE TABLE IF NOT EXISTS approve_attempt(
   business_id TEXT PRIMARY KEY, fails INTEGER NOT NULL);
+=======
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 CREATE TABLE IF NOT EXISTS service(
   id INTEGER PRIMARY KEY AUTOINCREMENT, business_id TEXT NOT NULL, name TEXT NOT NULL,
   price_paise INTEGER NOT NULL, minutes INTEGER NOT NULL);
@@ -125,6 +131,7 @@ class Store:
                 b = self.db.execute("SELECT * FROM business WHERE id=?", (business_id,)).fetchone()
                 if not b:
                     return err("not_found", "Unknown business.")
+<<<<<<< HEAD
                 row = self.db.execute("SELECT fails FROM approve_attempt WHERE business_id=?", (business_id,)).fetchone()
                 fails = row["fails"] if row else 0
                 if fails >= MAX_APPROVE_FAILS:
@@ -138,6 +145,10 @@ class Store:
                     left = MAX_APPROVE_FAILS - fails
                     return err("bad_code", f"Approval code does not match. {left} attempt(s) left." if left else
                                "Approval code does not match. This draft is now locked; create a new draft.")
+=======
+                if not secrets.compare_digest(b["approve_code"], approve_code):
+                    return err("bad_code", "Approval code does not match.")
+>>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
                 self.db.execute("UPDATE business SET status='published' WHERE id=?", (business_id,))
                 self._audit("published", business_id)
                 return {"ok": True, "status": "published", "business_id": business_id}
