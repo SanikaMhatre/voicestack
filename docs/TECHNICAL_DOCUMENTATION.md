@@ -8,7 +8,7 @@
 | **Author** | Sanika Mhatre |
 | **Licence** | MIT (see `LICENSE`) |
 | **Audience** | Developers who want to run, review, extend or integrate the system; hackathon judges |
-| **Status** | Hackathon prototype with a hardened HTTP layer (origin checks, rate limits, structured logs, container and CI files). **No authentication, no OAuth**, no real-device test (see §12 and §17). |
+| **Status** | Hackathon prototype with a hardened HTTP layer (origin checks, rate limits, structured logs). **No authentication, no OAuth**, no real-device test (see §12 and §17). |
 
 > **How to read this document.** §1-§3 explain *what* and *why*. §4-§8 explain *how it is built*. §9 is the API reference. §10-§11 walk through flows and the user interface. §12-§14 cover security, reliability and tests. §15 is the run book. §16-§17 cover the Alexa+ fit, the limits and future work.
 
@@ -179,8 +179,6 @@ voicestack/
 ├── README.md                   Quick start and limitations
 ├── requirements.txt            runtime: mcp==1.30.0, tzdata (Windows only)
 ├── requirements-dev.txt        runtime + pytest
-├── Dockerfile  .dockerignore   container image (non-root, /data volume, health check)
-├── .github/workflows/ci.yml    tests on Python 3.12 and 3.13, end-to-end check, image build
 ├── docs/
 │   ├── TECHNICAL_DOCUMENTATION.md   this file
 │   └── USER_GUIDE.md                how to use the three views
@@ -661,7 +659,7 @@ Customer names and appointment times are stored in plain text in `voicestack.db`
 
 - **Audit log.** Every state change writes an event with a timestamp and the shop id: `draft_created`, `published`, `held`, `confirmed`, `cancelled`, `hold_expired`, `waitlist_joined`, `waitlist_offer`, and **refused attempts** `rejected_slot_taken`, `rejected_unavailable`, `rejected_confirm_expired`, `rejected_confirm_confirmed`. Rejections are written *after* the transaction ends so they are not rolled back with it. The audit log holds ids, times and service names, **not** customer names.
 - **Structured access log.** One JSON line per request on stderr (fields in §12.2), with a request id that is also returned in `X-Request-ID`, so a report can be matched to a line. Pipe it to a file or a log service.
-- **Probes.** `/api/health` (process is up, version) and `/api/ready` (database answers); the Docker `HEALTHCHECK` uses `/api/ready`.
+- **Probes.** `/api/health` (process is up, version) and `/api/ready` (database answers).
 - **Request inspector** (Developer view) records every MCP call the page makes.
 - **Latency honesty.** Latency shown is the browser's round trip to `localhost`. It is **not** an Alexa+ end-to-end figure and includes no speech recognition. In the build environment single calls took roughly 10-30 ms and 20 simultaneous hold requests finished in about 70-200 ms. These are observations on one machine, not benchmarks, and the Developer view shows live numbers with sample counts so p95 is not over-read.
 - **Backend vs. conversation time.** The access log records server-side milliseconds per request, so backend time is now measurable separately from the browser round trip. There are still no metrics dashboards or tracing.
@@ -694,7 +692,7 @@ Customer names and appointment times are stored in plain text in `voicestack.db`
 During development the three views were driven in a headless Chromium (Playwright) through the full flow: sample shops, onboarding with warnings, hold/confirm/receipt, retry, rival, cancel, waitlist offer, owner table and audit, and a 20-customer race. The page was also loaded with the Content-Security-Policy enforced, with no violations. These scripts are **not** included in the repository, so there are no automated UI tests; the UI should be re-checked by hand after changes.
 
 ### 14.4 Not tested
-Real Alexa+ devices; real spoken Hindi; multiple server processes; very large data volumes; browsers other than Chromium; building and running the **Dockerfile** (no container runtime was available where it was written, so the image build is untested; the settings it relies on and its health-check command were checked directly); the GitHub Actions workflow (written but not yet run on GitHub). The unit tests were run on Python 3.11, 3.12 and 3.13.
+Real Alexa+ devices; real spoken Hindi; multiple server processes; very large data volumes; browsers other than Chromium; deployment to a hosted environment. The unit tests were run on Python 3.11, 3.12 and 3.13.
 
 ---
 
@@ -713,19 +711,13 @@ Open the page as `http://localhost:8000/` or `http://127.0.0.1:8000/`; other hos
 
 Run commands **from the project folder**: `python -m voicestack.server` imports the package by name.
 
-**Container (untested here, see §14.4):**
-```bash
-docker build -t voicestack .
-docker run --rm -p 8000:8000 -v voicestack-data:/data voicestack
-```
-The image runs as an unprivileged user, stores the database in the `/data` volume and listens on `0.0.0.0` inside the container. Publish the port only on a trusted interface (`-p 127.0.0.1:8000:8000`) unless you put HTTPS and the allow-lists in front of it.
 
 ### 15.2 Configuration (environment variables)
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `VOICESTACK_DB` | `voicestack.db` | Path of the SQLite file (`:memory:` also works for experiments) |
-| `HOST` | `127.0.0.1` | Interface to listen on (the Dockerfile sets `0.0.0.0`) |
+| `HOST` | `127.0.0.1` | Interface to listen on |
 | `PORT` | `8000` | Port |
 
 Security-related variables (`VOICESTACK_ALLOWED_HOSTS`, `VOICESTACK_ALLOWED_ORIGINS`, `VOICESTACK_RATE_PER_MIN`, `VOICESTACK_TRUST_PROXY`, `VOICESTACK_ENABLE_SEED`) are listed in §12.4.
@@ -781,7 +773,7 @@ This section records what was learned from the public hackathon material and the
 8. Single process. Several server processes on one database file would stay correct (write lock and primary key) but share no in-memory state and were not tested.
 9. Server-side latency is in the access log, but the inspector still shows browser round trips and there are no metrics dashboards.
 10. No automated browser tests in the repository.
-11. Tested: Python 3.11-3.13 (unit tests), Chromium (UI). The Dockerfile and CI workflow have not been run (§14.4).
+11. Tested: Python 3.11-3.13 (unit tests), Chromium (UI).
 12. Rate limits are in memory and per process.
 
 ### 17.2 Future work
