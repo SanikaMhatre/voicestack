@@ -3,24 +3,14 @@
 | | |
 |---|---|
 | **Project** | VoiceStack, a multi-shop, Hindi/English voice-booking back end exposed as an MCP server |
-<<<<<<< HEAD
 | **Document version** | 1.1, for application version 4 (`/api/health` reports `"version": 4`) |
-=======
-| **Document version** | 1.0, for application version 3 (`/api/health` reports `"version": 3`) |
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 | **Date** | 23 October 2026 |
 | **Author** | Sanika Mhatre |
 | **Licence** | MIT (see `LICENSE`) |
 | **Audience** | Developers who want to run, review, extend or integrate the system; hackathon judges |
-<<<<<<< HEAD
 | **Status** | Hackathon prototype with a hardened HTTP layer (origin checks, rate limits, structured logs, container and CI files). **No authentication, no OAuth**, no real-device test (see §12 and §17). |
 
 > **How to read this document.** §1-§3 explain *what* and *why*. §4-§8 explain *how it is built*. §9 is the API reference. §10-§11 walk through flows and the user interface. §12-§14 cover security, reliability and tests. §15 is the run book. §16-§17 cover the Alexa+ fit, the limits and future work.
-=======
-| **Status** | Hackathon prototype. Works end to end on a local machine. Not production-hardened (see §12 and §17). |
-
-> **How to read this document.** §1-§3 explain *what* and *why*. §4-§8 explain *how it is built*. §9 is the API reference. §10-§11 walk through flows and the user interface. §12-§14 cover security, reliability and tests. §15 is the run book. §16-§17 are honest notes about the Alexa+ fit, the limits and future work.
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ---
 
@@ -118,27 +108,17 @@ flowchart TB
   end
   subgraph Python process
     direction TB
-<<<<<<< HEAD
     HARD["Hardening middleware<br/>security.py"]
     MCPL["FastMCP app<br/>stateless Streamable HTTP<br/>/mcp"]
     REST["Starlette custom routes<br/>/ , /api/health, /api/ready, /api/seed,<br/>/api/day, /api/audit, /api/parse"]
-=======
-    MCPL["FastMCP app<br/>stateless Streamable HTTP<br/>/mcp"]
-    REST["Starlette custom routes<br/>/ , /api/health, /api/seed,<br/>/api/day, /api/audit, /api/parse"]
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
     PAR["parser.py<br/>rule-based Hindi/English"]
     ST["store.py<br/>all booking rules"]
   end
   DB[("SQLite, WAL mode")]
-<<<<<<< HEAD
   UI -- "JSON-RPC 2.0" --> HARD
   UI -- "fetch" --> HARD
   HARD --> MCPL
   HARD --> REST
-=======
-  UI -- "JSON-RPC 2.0" --> MCPL
-  UI -- "fetch" --> REST
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
   SR --> UI
   MCPL --> ST
   MCPL --> PAR
@@ -149,10 +129,7 @@ flowchart TB
 
 | Component | File | Responsibility |
 |---|---|---|
-<<<<<<< HEAD
 | HTTP hardening | `voicestack/security.py` | One ASGI middleware in front of everything: request id and JSON logs, Host/Origin allow-list, rate limit, body-size cap, security headers (§12). |
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 | MCP tools | `voicestack/server.py` | Eight thin functions decorated with `@mcp.tool()`. They validate nothing themselves; they call the store. |
 | Helper routes | `voicestack/server.py` | Serve the page and read-only/demo endpoints (§9.3). |
 | Booking core | `voicestack/store.py` | **The only code that reads or writes the database.** Holds every rule: hours, holds, expiry, idempotency, waitlist, audit. |
@@ -169,11 +146,7 @@ flowchart TB
 
 ### 3.3 Request lifecycle
 1. The page (or any MCP client) sends a JSON-RPC 2.0 `POST /mcp` with `tools/call`.
-<<<<<<< HEAD
 2. The hardening middleware checks Host and Origin, the rate limit and the body size (§12.2). FastMCP (stateless, JSON responses) then dispatches to the tool function in `server.py`.
-=======
-2. FastMCP (stateless, JSON responses) dispatches to the tool function in `server.py`.
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 3. The tool calls a method on the single `Store` object.
 4. `Store` takes a process-wide re-entrant lock, opens a `BEGIN IMMEDIATE` transaction for writes, applies the rules, commits, and returns a plain `dict`.
 5. FastMCP returns that dict as the tool result (`structuredContent.result`, mirrored as JSON text in `content`).
@@ -203,23 +176,17 @@ flowchart TB
 ```
 voicestack/
 ├── LICENSE                     MIT
-<<<<<<< HEAD
 ├── README.md                   Quick start and limitations
 ├── requirements.txt            runtime: mcp==1.30.0, tzdata (Windows only)
 ├── requirements-dev.txt        runtime + pytest
 ├── Dockerfile  .dockerignore   container image (non-root, /data volume, health check)
 ├── .github/workflows/ci.yml    tests on Python 3.12 and 3.13, end-to-end check, image build
-=======
-├── README.md                   Quick start and honest limits
-├── requirements.txt            mcp==1.30.0, pytest, tzdata (Windows only)
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 ├── docs/
 │   ├── TECHNICAL_DOCUMENTATION.md   this file
 │   └── USER_GUIDE.md                how to use the three views
 ├── scripts/
 │   └── mcp_smoke.py            end-to-end check against a running server (real MCP client)
 ├── tests/
-<<<<<<< HEAD
 │   ├── test_core.py            23 tests: booking rules, waitlist, audit, parser
 │   └── test_security.py        10 tests: origin/host, rate limit, body cap, headers, logs
 ├── voicestack/
@@ -228,14 +195,6 @@ voicestack/
 │   ├── store.py                booking core, SQLite schema, all rules   (~480 lines)
 │   ├── parser.py               rule-based Hindi/English parsing         (~140 lines)
 │   └── server.py               MCP tools + helper routes                (~200 lines)
-=======
-│   └── test_core.py            22 tests
-├── voicestack/
-│   ├── __init__.py
-│   ├── store.py                booking core, SQLite schema, all rules   (~470 lines)
-│   ├── parser.py               rule-based Hindi/English parsing         (~140 lines)
-│   └── server.py               MCP tools + helper routes                (~155 lines)
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 └── web/
     └── index.html              the three-view demo page                 (~620 lines)
 ```
@@ -458,11 +417,8 @@ Endpoint: `POST /mcp`, protocol `2025-11-25`, headers `Content-Type: application
 | 7 | `join_waitlist` | `business_id`, `service`, `date`, `time`, `customer_name` | `waitlist_id`, `state:"waiting"` (or `already_waiting`) |
 | 8 | `check_waitlist` | `waitlist_id` | `state`; when `offered`: `hold_id`, `expires_in_seconds`, `read_back` |
 
-<<<<<<< HEAD
 **Authentication.** None. Every tool is public; the hardening layer (§12) limits abuse but does not identify callers.
 
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 **Example: a draft with assumptions** (real output, shortened)
 ```json
 { "ok": true, "status": "draft", "business_id": "biz_443da8a5", "approve_code": "64e3ec",
@@ -505,12 +461,8 @@ curl -s -X POST http://localhost:8000/mcp \
 | `slot_free` | `join_waitlist` was called for a slot that is free; book it directly |
 | `hold_expired` / `hold_confirmed` | The hold can no longer be confirmed (state shown after `hold_`) |
 | `idempotency_key_reused` | The key was already used for a different request |
-<<<<<<< HEAD
 | `bad_code` | Wrong `approve_code`; the message says how many attempts are left |
 | `locked` | Five wrong approval codes were entered for one draft; it can no longer be published. Create a new draft |
-=======
-| `bad_code` | Wrong `approve_code` |
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ### 9.3 HTTP helper routes
 These serve the demo page. They are **not** MCP tools.
@@ -518,7 +470,6 @@ These serve the demo page. They are **not** MCP tools.
 | Method and path | Purpose | Notes |
 |---|---|---|
 | `GET /` | The demo page | |
-<<<<<<< HEAD
 | `GET /api/health` | `{ok, version:4, tools:8}` | Public. The page uses it to detect an out-of-date server |
 | `GET /api/ready` | `{ok:true}` or 503 | Public readiness probe (database answers) |
 | `POST /api/seed` | Creates and publishes three sample shops (skips existing names) | Demo only; **bypasses owner approval**. `VOICESTACK_ENABLE_SEED=0` returns 404 |
@@ -537,15 +488,6 @@ These serve the demo page. They are **not** MCP tools.
 
 Every response carries `X-Request-ID` (echoes a safe client value, otherwise generated).
 
-=======
-| `GET /api/health` | `{ok, version:3, tools:8}` | The page uses it to detect an out-of-date server |
-| `POST /api/seed` | Creates and publishes three sample shops (skips existing names) | **Demo only; bypasses owner approval** |
-| `GET /api/day?business_id=&date=` | Bookings and holds for one day, totals inputs | Read-only. Includes customer names |
-| `GET /api/audit?business_id=&limit=` | Shop-scoped event log, newest first | Read-only. Limit capped at 200 |
-| `POST /api/parse` | `{text, service_names[]}` → `{service,date,time,missing[]}` | Rule-based; the page uses it because there is no real assistant |
-| `GET /favicon.ico` | Inline SVG icon | |
-
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 ---
 
 ## 10. Key flows
@@ -642,10 +584,7 @@ Request inspector (request number, time, tool, outcome, milliseconds; **argument
 ### 11.5 Safety and accessibility notes
 - All dynamic text is inserted with `textContent` or text nodes, never as HTML.
 - Controls have labels or `aria-label`; the chat region uses `aria-live`; focus outlines are visible; light and dark colour schemes follow the system.
-<<<<<<< HEAD
 - The page is served with a Content-Security-Policy (§12.1); it uses inline script and style but loads nothing from other origins.
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 - A red banner appears if the server is unreachable or is an older version that lacks the new routes.
 
 ---
@@ -665,7 +604,6 @@ Headlines use a serif system font stack (Georgia and similar); body text uses th
 
 ## 12. Security and privacy
 
-<<<<<<< HEAD
 ### 12.1 Posture in one paragraph
 VoiceStack is a **hardened demo**, not a production service. There is **no authentication**: every tool and route is public, including the owner views (`/api/day`, `/api/audit`), publishing and `/api/seed`. The HTTP layer limits abuse (Host and Origin checks, rate limit, body cap, security headers, structured logs) but does not know *who* is calling. There is no OAuth/account linking and no HTTPS of its own.
 
@@ -715,29 +653,6 @@ Details that matter:
 | `VOICESTACK_ENABLE_SEED` | `1` | `0` removes the demo `/api/seed` route |
 
 ### 12.5 Privacy
-=======
-### 12.1 Current posture
-**This is a local demo with no authentication.** Treat it that way.
-
-| Area | Current state | Risk |
-|---|---|---|
-| Identity | None. Customer name is free text; any caller can use any tool | Anyone who can reach the port can create shops, book, cancel |
-| Capability IDs | `hold_id` and `booking_id` are random (about 72 bits) and act as bearer tokens | Safe against guessing, but anyone holding an ID can use it |
-| Owner approval | `approve_code` is only 6 hex digits (24 bits) and the drafter is not authenticated | Could be brute-forced over HTTP; compared in constant time but not rate-limited |
-| Data exposure | `/api/day` and `/api/audit` return data for any `business_id` without checks, including customer names | **Do not run with real customer data** |
-| Demo route | `/api/seed` creates published shops without owner approval | Demo only |
-| Transport | Plain HTTP on `127.0.0.1` | Fine locally; needs HTTPS if exposed |
-| Injection | All SQL uses bound parameters; the page never renders HTML from data | No known injection path |
-| Secrets | None exist: no API keys or tokens | Nothing to leak |
-
-### 12.2 What production would need
-- **Real authentication.** The Alexa+ MCP documentation reviewed during development says account linking is optional and, if used, requires OAuth 2.1 with PKCE (S256) and a refresh token. This project **does not implement it** and does not claim to. Verify the current requirements before building it.
-- Identity taken from the verified token, **never** from model-supplied arguments such as `customer_id`; separate owner and customer scopes; the owner tools restricted to the owner's own business.
-- Rate limiting, longer approval codes, HTTPS, request size limits, and removal of `/api/seed`.
-- A data-retention and consent policy for customer names and appointment times.
-
-### 12.3 Privacy
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 Customer names and appointment times are stored in plain text in `voicestack.db`. The browser's speech recogniser may send audio to the browser vendor; the page says so next to the mic. No analytics or third-party scripts are loaded.
 
 ---
@@ -745,27 +660,17 @@ Customer names and appointment times are stored in plain text in `voicestack.db`
 ## 13. Reliability and observability
 
 - **Audit log.** Every state change writes an event with a timestamp and the shop id: `draft_created`, `published`, `held`, `confirmed`, `cancelled`, `hold_expired`, `waitlist_joined`, `waitlist_offer`, and **refused attempts** `rejected_slot_taken`, `rejected_unavailable`, `rejected_confirm_expired`, `rejected_confirm_confirmed`. Rejections are written *after* the transaction ends so they are not rolled back with it. The audit log holds ids, times and service names, **not** customer names.
-<<<<<<< HEAD
 - **Structured access log.** One JSON line per request on stderr (fields in §12.2), with a request id that is also returned in `X-Request-ID`, so a report can be matched to a line. Pipe it to a file or a log service.
 - **Probes.** `/api/health` (process is up, version) and `/api/ready` (database answers); the Docker `HEALTHCHECK` uses `/api/ready`.
 - **Request inspector** (Developer view) records every MCP call the page makes.
 - **Latency honesty.** Latency shown is the browser's round trip to `localhost`. It is **not** an Alexa+ end-to-end figure and includes no speech recognition. In the build environment single calls took roughly 10-30 ms and 20 simultaneous hold requests finished in about 70-200 ms. These are observations on one machine, not benchmarks, and the Developer view shows live numbers with sample counts so p95 is not over-read.
 - **Backend vs. conversation time.** The access log records server-side milliseconds per request, so backend time is now measurable separately from the browser round trip. There are still no metrics dashboards or tracing.
-=======
-- **Request inspector** (Developer view) records every MCP call the page makes.
-- **Latency honesty.** Latency shown is the browser's round trip to `localhost`. It is **not** an Alexa+ end-to-end figure and includes no speech recognition. In the build environment single calls took roughly 10-30 ms and 20 simultaneous hold requests finished in about 70-200 ms. These are observations on one machine, not benchmarks, and the Developer view shows live numbers with sample counts so p95 is not over-read.
-- **Backend vs. conversation time** are not separated: there is no server-side timing yet (§17).
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ---
 
 ## 14. Testing
 
-<<<<<<< HEAD
 ### 14.1 Automated tests (`pytest -q`, 33 tests)
-=======
-### 14.1 Automated tests (`pytest -q`, 22 tests)
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 | Area | Tests |
 |---|---|
@@ -779,7 +684,6 @@ Customer names and appointment times are stored in plain text in `voicestack.db`
 | Waitlist | Offer on cancel, stranger blocked while offered, first in line wins, offer expiry frees the slot |
 | Owner data | Day view shows bookings and holds; audit is shop-scoped and records rejections and expiries |
 | Language | Roman and Devanagari request parsing, including the case from real Hindi speech output |
-<<<<<<< HEAD
 | Approval code | Five wrong codes lock a draft, even the right code is then refused, both events are audited |
 | HTTP hardening (`test_security.py`) | Security headers and request id; foreign Origin and foreign Host → 403; rate limit → 429 with `Retry-After`; 1 MiB cap → 413; input limits on `/api/parse`; seed switch and readiness probe; logs are JSON, name tools (also inside a batch) and contain no request data; public tools and routes work without credentials; default settings |
 
@@ -791,17 +695,6 @@ During development the three views were driven in a headless Chromium (Playwrigh
 
 ### 14.4 Not tested
 Real Alexa+ devices; real spoken Hindi; multiple server processes; very large data volumes; browsers other than Chromium; building and running the **Dockerfile** (no container runtime was available where it was written, so the image build is untested; the settings it relies on and its health-check command were checked directly); the GitHub Actions workflow (written but not yet run on GitHub). The unit tests were run on Python 3.11, 3.12 and 3.13.
-=======
-
-### 14.2 End-to-end check
-`scripts/mcp_smoke.py` starts a real MCP client (initialize, `tools/list`, `tools/call`) against a running server and checks protocol negotiation, 8 tools advertised, draft not bookable, publish, hold, rival rejected, retry returns the same booking, and cancel frees the slot. Run it with the server up; it exits non-zero on failure.
-
-### 14.3 Browser verification
-During development the three views were driven in a headless Chromium (Playwright) through the full flow: sample shops, onboarding with warnings, hold/confirm/receipt, retry, rival, cancel, waitlist offer, owner table and audit, and a 20-customer race. These scripts are **not** included in the repository, so there are no automated UI tests; the UI should be re-checked by hand after changes.
-
-### 14.4 Not tested
-Real Alexa+ devices; real spoken Hindi; multiple server processes; very large data volumes; browsers other than Chromium; the production-hardening items in §12.2.
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ---
 
@@ -813,7 +706,6 @@ Real Alexa+ devices; real spoken Hindi; multiple server processes; very large da
 conda create -n voicestack python=3.13 -y
 conda activate voicestack
 cd voicestack
-<<<<<<< HEAD
 pip install -r requirements-dev.txt     # runtime + pytest (use requirements.txt for runtime only)
 python -m voicestack.server        # MCP: http://localhost:8000/mcp   page: http://localhost:8000/
 ```
@@ -828,41 +720,24 @@ docker run --rm -p 8000:8000 -v voicestack-data:/data voicestack
 ```
 The image runs as an unprivileged user, stores the database in the `/data` volume and listens on `0.0.0.0` inside the container. Publish the port only on a trusted interface (`-p 127.0.0.1:8000:8000`) unless you put HTTPS and the allow-lists in front of it.
 
-=======
-pip install -r requirements.txt
-python -m voicestack.server        # MCP: http://localhost:8000/mcp   page: http://localhost:8000/
-```
-Run commands **from the project folder**: `python -m voicestack.server` imports the package by name.
-
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 ### 15.2 Configuration (environment variables)
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `VOICESTACK_DB` | `voicestack.db` | Path of the SQLite file (`:memory:` also works for experiments) |
-<<<<<<< HEAD
 | `HOST` | `127.0.0.1` | Interface to listen on (the Dockerfile sets `0.0.0.0`) |
 | `PORT` | `8000` | Port |
 
 Security-related variables (`VOICESTACK_ALLOWED_HOSTS`, `VOICESTACK_ALLOWED_ORIGINS`, `VOICESTACK_RATE_PER_MIN`, `VOICESTACK_TRUST_PROXY`, `VOICESTACK_ENABLE_SEED`) are listed in §12.4.
 
-=======
-| `HOST` | `127.0.0.1` | Interface to listen on. Leave as is unless you add authentication |
-| `PORT` | `8000` | Port |
-
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 Example (Windows PowerShell): `$env:PORT=8010; python -m voicestack.server`.
 
 ### 15.3 Operations
 - **Reset to a clean demo:** stop the server (Ctrl+C), delete `voicestack.db` (and `voicestack.db-wal`, `voicestack.db-shm` if present), start again, then load the sample shops.
 - **Backup:** copy the database file while the server is stopped.
 - **Upgrade from an older database:** the audit table gains a `business_id` column automatically on start.
-<<<<<<< HEAD
 - **Run the tests:** `pytest -q`. **Run the smoke check** (server running): `python scripts/mcp_smoke.py`.
 - **Logs:** JSON lines on stderr; redirect with `python -m voicestack.server 2> access.log`.
-=======
-- **Run the tests:** `pytest -q`. **Run the smoke check:** `python scripts/mcp_smoke.py`.
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ### 15.4 Troubleshooting
 
@@ -872,11 +747,8 @@ Example (Windows PowerShell): `$env:PORT=8010; python -m voicestack.server`.
 | "Load 3 sample shops" seems to do nothing | The shops already exist, so nothing new is created. Check the shop selector |
 | `ModuleNotFoundError: mcp.server.fastmcp` | `mcp` 2.x got installed. Run `pip install "mcp==1.30.0"` |
 | "Address already in use" | Another process holds port 8000. Stop it, or set `PORT` |
-<<<<<<< HEAD
 | HTTP 403 `forbidden_host` / `forbidden_origin` | You opened the page through a host name that is not allow-listed; use `localhost` or add it to the allow-lists |
 | HTTP 429 | Too many requests from this client; wait the `Retry-After` seconds |
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 | `ZoneInfoNotFoundError` on Windows | Install the time-zone data: `pip install tzdata` (included in `requirements.txt`) |
 | Mic button missing | The browser has no speech recognition. Use Chrome, or type |
 | Hindi speech is misheard | Edit the text in the box before sending; accuracy depends on the browser |
@@ -891,23 +763,15 @@ This section records what was learned from the public hackathon material and the
 - The hackathon's Alexa+ track accepts a **self-hosted MCP server** (Streamable HTTP), an agent skill, or a **simulated Alexa+ web application**. Alexa+ add-on tooling is not available to participants, so this project's page *simulates* the assistant: it is a genuine MCP client (initialize, `tools/list`, `tools/call`) with typed or browser-recognised speech standing in for the device.
 - Documented constraints (as reviewed): tool round trips should complete in under about 500 ms; tool metadata refreshes only when an add-on is deployed; account linking, if used, needs OAuth 2.1 with PKCE.
 - Design implication already followed: the tools are **generic** (`find_businesses`, `get_slots`, `hold_slot`, ...). Adding a third shop needs data, not a new tool or a redeploy.
-<<<<<<< HEAD
 - There is no authentication; a deployment for real Alexa+ use would need OAuth account linking (§12.3).
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 - **Not done:** account linking, deployment behind public HTTPS, and any test on a real device or Alexa+ preview.
 
 ---
 
 ## 17. Known limitations and future work
 
-<<<<<<< HEAD
 ### 17.1 Limitations
 1. No authentication or authorisation: every tool and route is public (§12).
-=======
-### 17.1 Limitations (honest list)
-1. No authentication or authorisation (§12).
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 2. `hold_slot` is not idempotent; a retried hold request creates a second hold.
 3. Waitlist offers are not passed to the next person if the first lets the offer expire.
 4. Single time zone, fixed 30-minute grid, no payments, no reminders, no calendar sync.
@@ -915,7 +779,6 @@ This section records what was learned from the public hackathon material and the
 6. The 14-day pre-generated availability from the original plan was **not built**; slots are computed on demand, which is simpler and correct for this scale but untested at large scale.
 7. Owner "editing" of a draft is done by editing the message and extracting again; there is no per-field editor.
 8. Single process. Several server processes on one database file would stay correct (write lock and primary key) but share no in-memory state and were not tested.
-<<<<<<< HEAD
 9. Server-side latency is in the access log, but the inspector still shows browser round trips and there are no metrics dashboards.
 10. No automated browser tests in the repository.
 11. Tested: Python 3.11-3.13 (unit tests), Chromium (UI). The Dockerfile and CI workflow have not been run (§14.4).
@@ -923,14 +786,6 @@ This section records what was learned from the public hackathon material and the
 
 ### 17.2 Future work
 OAuth 2.1 + PKCE with owner and customer scopes; idempotent holds; passing waitlist offers down the queue; per-field draft editor; metrics and tracing on top of the access log; owner notifications; payments and reminders; a language-model *extractor* that may only propose drafts (never write), behind the same approval step; a reusable package of the reliability helpers (idempotency, approval envelope, timing).
-=======
-9. No server-side latency measurement; the inspector shows browser round trips.
-10. No automated browser tests in the repository.
-11. Only the tested environment is known to work: Python 3.13, Chromium.
-
-### 17.2 Future work
-OAuth 2.1 + PKCE with owner and customer scopes; idempotent holds; passing waitlist offers down the queue; per-field draft editor; server-side timing and structured logs; owner notifications; payments and reminders; a language-model *extractor* that may only propose drafts (never write), behind the same approval step; a reusable package of the reliability helpers (idempotency, approval envelope, timing).
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 ---
 

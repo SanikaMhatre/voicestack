@@ -238,7 +238,6 @@ def test_onboarding_flags_what_was_assumed():
     assert p["hours_assumed"] is True
     assert [x["minutes_assumed"] for x in p["services"]] == [True, False]
     assert parse_onboarding("haircut 300 45min, open 9-5")["hours_assumed"] is False
-<<<<<<< HEAD
 
 
 def test_wrong_approve_codes_lock_the_draft(tmp_path):
@@ -254,5 +253,3 @@ def test_wrong_approve_codes_lock_the_draft(tmp_path):
     assert s.find_businesses()["businesses"] == []
     events = [a["event"] for a in s.audit_list(bid, 50)["events"]]
     assert "approve_rejected" in events and "approve_locked" in events
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1

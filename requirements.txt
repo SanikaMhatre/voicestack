@@ -1,6 +1,2 @@
 mcp==1.30.0
-<<<<<<< HEAD
-=======
-pytest
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 tzdata; sys_platform == "win32"

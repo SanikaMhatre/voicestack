@@ -1,10 +1,7 @@
 """VoiceStack MCP server (Streamable HTTP, stateless JSON) + simulated Alexa+ demo page.
 
 Run:  python -m voicestack.server      ->  MCP at http://localhost:8000/mcp , demo at http://localhost:8000/
-<<<<<<< HEAD
 HTTP hardening (origin checks, rate limit, headers, logs) lives in voicestack/security.py. There is no authentication.
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 """
 from __future__ import annotations
 
@@ -12,23 +9,16 @@ import os
 from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
-<<<<<<< HEAD
 from mcp.server.transport_security import TransportSecuritySettings
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 from starlette.requests import Request
 from starlette.responses import FileResponse, JSONResponse, Response
 
 from .parser import parse_onboarding, parse_request
-<<<<<<< HEAD
 from .security import Hardening, Settings
-=======
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 from .store import IST, Store
 
 import datetime as dt
 
-<<<<<<< HEAD
 settings = Settings.from_env()
 store = Store(os.environ.get("VOICESTACK_DB", "voicestack.db"))
 mcp = FastMCP("voicestack", stateless_http=True, json_response=True,
@@ -36,11 +26,6 @@ mcp = FastMCP("voicestack", stateless_http=True, json_response=True,
               transport_security=TransportSecuritySettings(
                   enable_dns_rebinding_protection=True,
                   allowed_hosts=list(settings.allowed_hosts), allowed_origins=list(settings.allowed_origins)))
-=======
-store = Store(os.environ.get("VOICESTACK_DB", "voicestack.db"))
-mcp = FastMCP("voicestack", stateless_http=True, json_response=True,
-              host=os.environ.get("HOST", "127.0.0.1"), port=int(os.environ.get("PORT", "8000")))
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 WEB = Path(__file__).resolve().parent.parent / "web"
 
 
@@ -120,14 +105,10 @@ DEMO_SHOPS = [
 
 @mcp.custom_route("/api/seed", methods=["POST"])
 async def api_seed(request: Request) -> JSONResponse:
-<<<<<<< HEAD
     """Demo-only: create and publish three sample shops (skips ones that already exist).
     Production shops go through the owner-approval flow; set VOICESTACK_ENABLE_SEED=0 to switch this off."""
     if not settings.enable_seed:
         return JSONResponse({"ok": False, "error": "disabled", "message": "Sample data is switched off on this server."}, status_code=404)
-=======
-    """Demo-only: create and publish three sample shops (skips ones that already exist). Production shops go through the owner-approval flow."""
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
     have = {b["name"] for b in store.find_businesses()["businesses"]}
     made = []
     for name, text, chairs in DEMO_SHOPS:
@@ -151,21 +132,16 @@ async def api_day(request: Request) -> JSONResponse:
 async def api_audit(request: Request) -> JSONResponse:
     """Read-only, business-scoped change log for the owner view (includes rejected attempts)."""
     q = request.query_params
-<<<<<<< HEAD
     try:
         limit = max(1, min(200, int(q.get("limit", "50") or 50)))
     except ValueError:
         return JSONResponse({"ok": False, "error": "invalid", "message": "limit must be a number."}, status_code=400)
     return JSONResponse(store.audit_list(q.get("business_id", ""), limit))
-=======
-    return JSONResponse(store.audit_list(q.get("business_id", ""), int(q.get("limit", "50") or 50)))
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 
 @mcp.custom_route("/api/parse", methods=["POST"])
 async def api_parse(request: Request) -> JSONResponse:
     """Demo-page helper: typed Hindi/English -> {service,date,time}. Rule-based; real Alexa+ does its own language understanding."""
-<<<<<<< HEAD
     try:
         body = await request.json()
         text = str(body.get("text", ""))[:500]
@@ -174,18 +150,11 @@ async def api_parse(request: Request) -> JSONResponse:
         return JSONResponse({"ok": False, "error": "invalid", "message": "Send JSON like {\"text\": \"...\", \"service_names\": []}."}, status_code=400)
     today = dt.datetime.now(IST).date()
     return JSONResponse(parse_request(text, today, names))
-=======
-    body = await request.json()
-    names = body.get("service_names", [])
-    today = dt.datetime.now(IST).date()
-    return JSONResponse(parse_request(str(body.get("text", "")), today, names))
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 
 @mcp.custom_route("/api/health", methods=["GET"])
 async def health(request: Request) -> JSONResponse:
     """Lets the demo page detect an out-of-date server."""
-<<<<<<< HEAD
     return JSONResponse({"ok": True, "version": 4, "tools": 8})
 
 
@@ -197,9 +166,6 @@ async def ready(request: Request) -> JSONResponse:
     except Exception:
         return JSONResponse({"ok": False, "error": "db_unavailable"}, status_code=503)
     return JSONResponse({"ok": True})
-=======
-    return JSONResponse({"ok": True, "version": 3, "tools": 8})
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
 
 
 @mcp.custom_route("/favicon.ico", methods=["GET"])
@@ -213,7 +179,6 @@ async def index(request: Request) -> FileResponse:
     return FileResponse(WEB / "index.html")
 
 
-<<<<<<< HEAD
 app = mcp.streamable_http_app()
 app.add_middleware(Hardening, settings=settings)
 
@@ -229,7 +194,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-=======
-if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
->>>>>>> c4cefaabec17b67be0d42b87673b30d9cf43d1e1
