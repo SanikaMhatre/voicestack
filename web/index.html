@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#134a45">
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
+<title>VoiceStack – voice booking for local shops</title>
+<style>
+  /* VoiceStack brand: forest green, cream, mint, coral. Serif for the voice of the product, sans for the tools. */
+  :root{
+    --cream:#f3f0e8; --paper:#fbf9f4; --beige:#f6f2e7; --forest:#134a45; --ink:#143b37; --mute:#5b6c66; --line:#ddd7c9;
+    --mint:#b8e6cc; --mint-soft:#e3f0e6; --coral:#e8795c;
+    --btn:#134a45; --btn-ink:#ffffff; --cta:#bc523b; --cta-ink:#ffffff; --frame:#134a45; --dots:rgba(19,74,69,.09);
+    --hold:#8a5a12; --hold-soft:#f6e9c9; --ok:#1b6b4a; --ok-soft:#dff0e4; --bad:#a8281c; --bad-soft:#fbe3df;
+    --bg:var(--cream); --card:var(--paper); --acc:var(--btn); --acc-soft:var(--mint-soft); --acc-ink:var(--btn-ink);
+    --bubble-me:var(--mint-soft);
+    --serif:Georgia,"Iowan Old Style","Palatino Linotype","Book Antiqua",serif;
+    --sans:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --cream:#0d2623; --paper:#13312d; --beige:#173a35; --ink:#e9f3ed; --mute:#9bb5ac; --line:#28483f;
+    --btn:#b8e6cc; --btn-ink:#0c2724; --cta:#e8795c; --cta-ink:#220d07; --frame:#2a6f66; --dots:rgba(184,230,204,.07);
+    --hold:#f0c36a; --hold-soft:#3b2f12; --ok:#6fdca8; --ok-soft:#12362a; --bad:#ff9a8f; --bad-soft:#3d1914;
+    --mint-soft:#1c4740; --bubble-me:#1f4f47;}}
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font:15px/1.55 var(--sans);background-color:var(--cream);
+    background-image:radial-gradient(circle,var(--dots) 1px,transparent 1.3px);background-size:22px 22px}
+  .wrap{max-width:1240px;margin:auto;padding:0 20px}
+  [hidden]{display:none!important}
+  h1,h2,h3{font-family:var(--serif)}
+
+  /* header */
+  header{padding:18px 0 14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .brand{display:flex;gap:12px;align-items:center;text-decoration:none;color:inherit}
+  .brand svg{flex:none}
+  .brand h1{margin:0;font-size:23px;line-height:1;letter-spacing:-.3px;font-weight:800}
+  .brand .tag{color:var(--mute);font-size:12.5px;margin-top:3px}
+  .spacer{flex:1}
+  nav{display:flex;gap:4px;background:var(--paper);border:1px solid var(--line);padding:4px;border-radius:999px}
+  nav button{background:transparent;color:var(--mute);padding:8px 18px;border-radius:999px;font-weight:600;white-space:nowrap}
+  @media (max-width:480px){nav button{padding:8px 11px;font-size:13px}}
+  nav button.on{background:var(--btn);color:var(--btn-ink)}
+  .help{width:38px;height:38px;border-radius:50%;padding:0;font:700 18px var(--serif);display:grid;place-items:center;background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+  #shop{width:190px}
+
+  /* controls */
+  label{display:block;font-size:12.5px;color:var(--mute);margin:10px 0 4px}
+  input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--cream);color:var(--ink);font:inherit}
+  input::placeholder,textarea::placeholder{color:var(--mute);opacity:.8}
+  input:focus,textarea:focus,select:focus,button:focus-visible,.shop:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+  button{font:inherit;border:0;border-radius:12px;padding:10px 16px;cursor:pointer;background:var(--btn);color:var(--btn-ink);font-weight:600}
+  button.alt{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
+  button.alt:hover{border-color:var(--ink)}
+  button.cta{background:var(--cta);color:var(--cta-ink)}
+  button.danger{background:transparent;color:var(--bad);border:1.5px solid var(--bad)}
+  button.sm{padding:6px 12px;font-size:13px;border-radius:10px}
+  button:disabled{opacity:.45;cursor:default}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:0 0 auto}.row>.grow{flex:1 1 120px}
+  .note{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+
+  /* status pill */
+  .pill{display:inline-block;font-size:12px;font-weight:700;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--mute);white-space:nowrap}
+  .pill.acc{background:var(--mint-soft);color:var(--ink);border-color:var(--mint)}
+  .pill.hold{background:var(--hold-soft);color:var(--hold);border-color:var(--hold)}
+  .pill.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+  .pill.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+
+  /* layout */
+  .grid{display:grid;gap:18px;align-items:start;padding-bottom:20px}
+  .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .go{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
+  .intro{grid-column:1/-1;padding:6px 0 4px}
+  .intro h2{margin:0;font-size:clamp(26px,3.2vw,38px);line-height:1.05;letter-spacing:-.4px;font-weight:800;text-transform:uppercase}
+  .intro p{margin:6px 0 0;color:var(--mute)}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:20px}
+  .card h2{font-size:19px;margin:0 0 12px;font-weight:700;letter-spacing:-.1px}
+  .step{display:none}
+
+  /* customer: hero + framed assistant */
+  .cust{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);gap:36px;align-items:start;padding:10px 0 30px}
+  .eyebrow{display:inline-block;background:var(--mint-soft);color:var(--ink);font-size:11.5px;font-weight:700;letter-spacing:.9px;text-transform:uppercase;padding:7px 16px;border-radius:999px}
+  .hero{margin:22px 0 0;font-size:clamp(40px,5.6vw,72px);line-height:.98;letter-spacing:-1px;font-weight:800;text-transform:uppercase}
+  .bar{width:124px;height:8px;border-radius:8px;background:var(--coral);margin:22px 0 26px}
+  .lead{margin:0;font-size:20px;font-weight:700}
+  .lead span{display:block;font-size:15px;font-weight:400;color:var(--mute);margin-top:2px}
+  .wave{display:block;margin:28px 0 10px}
+  .wave rect{fill:var(--forest);transform-box:fill-box;transform-origin:center}
+  @media (prefers-color-scheme:dark){.wave rect{fill:var(--mint)}}
+  .wave rect.hot{fill:var(--coral)}
+  .langs{font-size:12px;font-weight:700;letter-spacing:.9px;color:var(--ink)}
+  .promise{color:var(--mute);margin:4px 0 26px}
+  body.listening .wave rect{animation:beat .9s ease-in-out infinite}
+  body.listening .wave rect:nth-child(3n){animation-delay:.15s}body.listening .wave rect:nth-child(3n+1){animation-delay:.3s}
+  @keyframes beat{50%{transform:scaleY(.45)}}
+  @media (prefers-reduced-motion:reduce){body.listening .wave rect{animation:none}.mic.on{animation:none}}
+
+  .device{background:var(--frame);border-radius:36px;padding:14px;position:relative}
+  .device-in{background:var(--paper);border-radius:24px;padding:20px}
+  .dev-head{display:flex;align-items:center;gap:10px;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:12px}
+  .dev-head b{font:800 19px var(--serif);display:block;line-height:1.1}
+  .dev-head small{font-size:10.5px;font-weight:700;letter-spacing:.9px;color:var(--mute)}
+  .chat{height:370px;overflow:auto;padding:2px 4px 2px 0;display:flex;flex-direction:column;gap:10px}
+  .msg{max-width:92%;padding:11px 14px;border-radius:14px;font-size:14.5px;white-space:pre-wrap}
+  .msg small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.65;margin-bottom:3px}
+  .msg.me{align-self:flex-end;background:var(--bubble-me);color:var(--ink);border-bottom-right-radius:4px}
+  .msg.bot{align-self:flex-start;background:var(--beige);border:1px solid var(--line);border-bottom-left-radius:4px}
+  .msg.other{align-self:flex-start;background:var(--hold-soft);border:1px solid var(--hold);border-bottom-left-radius:4px}
+  .msg .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:12.5px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--cream);color:var(--ink);cursor:pointer;font-weight:500}
+  .chip:hover{border-color:var(--ink)}
+  .mic{width:46px;height:46px;border-radius:50%;padding:0;display:grid;place-items:center;font-size:19px}
+  .mic.on{background:var(--cta);color:var(--cta-ink);animation:pulse 1s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 8px rgba(232,121,92,.25)}}
+  .promise-chip{display:flex;gap:8px;align-items:center;margin-top:14px;background:var(--mint-soft);border-radius:12px;padding:9px 14px;font-size:11.5px;font-weight:700;letter-spacing:.7px;text-transform:uppercase}
+  .promise-chip i{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none}
+
+  /* shops + receipt */
+  .shop{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;background:var(--cream)}
+  .shop:hover{border-color:var(--ink)}
+  .shop.sel{border-color:var(--forest);background:var(--mint-soft);box-shadow:inset 3px 0 0 var(--coral)}
+  .shop b{display:block;font:700 16px var(--serif)} .shop span{font-size:12.5px;color:var(--mute)}
+  .receipt{background:var(--beige);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:14px;padding:14px 16px;margin-top:6px}
+  .receipt>b{font:700 17px var(--serif);color:var(--ok)}
+  .receipt dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-size:13.5px}
+  .receipt dt{color:var(--mute)}.receipt dd{margin:0;font-weight:600}
+
+  /* tables, totals, owner */
+  table{border-collapse:collapse;width:100%;font-size:13.5px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11.5px;font-weight:700;color:var(--mute);background:var(--beige);position:sticky;top:0}
+  .tablewrap{overflow:auto;max-height:300px;border:1px solid var(--line);border-radius:14px}
+  .totals{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .stat{flex:1 1 100px;border:1px solid var(--line);border-radius:14px;padding:10px 14px;background:var(--cream)}
+  .stat b{display:block;font:800 26px/1.1 var(--serif)}.stat span{font-size:12px;color:var(--mute)}
+  .stat.good b{color:var(--ok)}.stat.badc b{color:var(--bad)}
+  .warn{margin:8px 0 0;padding:9px 12px;border-radius:12px;background:var(--hold-soft);border:1px solid var(--hold);font-size:13px}
+  .okbox{margin:8px 0 0;padding:9px 12px;border-radius:12px;background:var(--ok-soft);border:1px solid var(--ok);font-size:13px}
+  .audit{max-height:260px;overflow:auto;font-size:13px}
+  .audit div{padding:6px 0;border-bottom:1px solid var(--line);display:flex;gap:10px}
+  .audit time{color:var(--mute);font-size:12px;flex:0 0 64px;font-variant-numeric:tabular-nums}
+  .audit .rej{color:var(--bad)}
+  .cal{position:relative;margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--cream)}
+  .cal .hr{position:absolute;left:0;right:0;border-top:1px solid var(--line);font-size:10px;color:var(--mute);padding-left:6px}
+  .cal .blk{position:absolute;border-radius:8px;padding:3px 7px;font-size:11.5px;line-height:1.25;overflow:hidden;border:1px solid}
+  .blk.booking{background:var(--ok-soft);border-color:var(--ok)} .blk.hold{background:var(--hold-soft);border-color:var(--hold)}
+  .blk.cancelled{opacity:.4;text-decoration:line-through}
+
+  /* developer */
+  .log{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;max-height:280px;overflow:auto;background:var(--cream);padding:12px;border-radius:14px;border:1px solid var(--line)}
+  .log .ok,td.ok{color:var(--ok)}.log .bad,td.bad{color:var(--bad)}.log .dim{color:var(--mute)}
+  .racers{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin-top:10px}
+  .racer{font-size:12px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--cream)}
+  .racer.win{background:var(--ok-soft);border-color:var(--ok);font-weight:700}.racer.lose{color:var(--mute)}
+  .tools{padding-left:18px}.tools li{margin:5px 0;font-size:13px}
+
+  dialog{max-width:660px;width:calc(100% - 32px);border:1px solid var(--line);border-radius:24px;background:var(--paper);color:var(--ink);padding:26px}
+  dialog::backdrop{background:rgba(10,36,33,.55)}
+  dialog h3{margin:0 0 4px;font-size:26px;font-weight:800;letter-spacing:-.3px} dialog details{border-top:1px solid var(--line);padding:10px 0}
+  dialog summary{cursor:pointer;font:700 16px var(--serif)} dialog ol,dialog ul{margin:8px 0 4px;padding-left:20px;font-size:14px}
+
+  @media (max-width:1000px){
+    .cust,.go,.g3{grid-template-columns:1fr}.cust{gap:24px}
+    .hero{font-size:clamp(38px,11vw,60px)}
+    #shop{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="brand" href="#customer" aria-label="VoiceStack home"><svg width="42" height="42" viewBox="0 0 40 40" role="img" aria-label="VoiceStack logo"><rect width="40" height="40" rx="12" fill="#134a45"/><path d="M8 19h5l3-7 4.5 14 3-7H31" fill="none" stroke="#b8e6cc" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30.5" cy="31" r="3.2" fill="#e8795c"/></svg><div><h1>VoiceStack</h1><div class="tag">Voice-powered local bookings</div></div></a>
+  <div class="spacer"></div>
+  <nav role="tablist" aria-label="Views">
+    <button data-view="customer" role="tab">Customer</button>
+    <button data-view="owner" role="tab">Shop owner</button>
+    <button data-view="developer" role="tab">Developer</button>
+  </nav>
+  <select id="shop" aria-label="Active shop"></select>
+  <button id="helpBtn" class="help" aria-label="How to use this page" title="How to use this page">?</button>
+</header>
+<div id="banner" class="card" hidden style="border-color:var(--bad);background:var(--bad-soft);margin-bottom:16px"></div>
+
+<!-- ================= CUSTOMER ================= -->
+<main id="v-customer" class="cust" hidden>
+  <div>
+    <span class="eyebrow">Conversational bookings</span>
+    <h2 class="hero">A booking<br>that listens.</h2>
+    <div class="bar"></div>
+    <p class="lead">Say it naturally.<span>Review the details. Confirm once.</span></p>
+    <svg class="wave" width="198" height="56" viewBox="0 0 198 56" aria-hidden="true"><rect class="" x="0" y="23" width="4" height="10" rx="2"/><rect class="" x="9" y="17" width="4" height="22" rx="2"/><rect class="" x="18" y="20" width="4" height="16" rx="2"/><rect class="" x="27" y="11" width="4" height="34" rx="2"/><rect class="" x="36" y="16" width="4" height="24" rx="2"/><rect class="" x="45" y="6" width="4" height="44" rx="2"/><rect class="" x="54" y="13" width="4" height="30" rx="2"/><rect class="" x="63" y="19" width="4" height="18" rx="2"/><rect class="" x="72" y="8" width="4" height="40" rx="2"/><rect class="hot" x="81" y="1" width="4" height="54" rx="2"/><rect class="" x="90" y="10" width="4" height="36" rx="2"/><rect class="" x="99" y="17" width="4" height="22" rx="2"/><rect class="" x="108" y="5" width="4" height="46" rx="2"/><rect class="" x="117" y="14" width="4" height="28" rx="2"/><rect class="" x="126" y="21" width="4" height="14" rx="2"/><rect class="" x="135" y="11" width="4" height="34" rx="2"/><rect class="" x="144" y="18" width="4" height="20" rx="2"/><rect class="" x="153" y="15" width="4" height="26" rx="2"/><rect class="" x="162" y="22" width="4" height="12" rx="2"/><rect class="" x="171" y="19" width="4" height="18" rx="2"/><rect class="" x="180" y="23" width="4" height="10" rx="2"/><rect class="" x="189" y="21" width="4" height="14" rx="2"/></svg>
+    <div class="langs">HINDI + ENGLISH</div>
+    <p class="promise">One clear read-back before the booking is made.</p>
+    <section class="card" aria-labelledby="h-shops" style="margin-bottom:16px">
+      <h2 id="h-shops">Shops you can book</h2>
+      <div id="shopCards"></div>
+    </section>
+    <section class="card" aria-labelledby="h-rcpt">
+      <h2 id="h-rcpt">Your booking</h2>
+      <div id="receipt" class="note" style="margin:0">Nothing booked yet. Your receipt appears here after you confirm.</div>
+      <div id="tryit" hidden>
+        <p class="note">Try to break it:</p>
+        <div class="row"><button id="retry" class="alt sm">Network retry (same key)</button><button id="rival" class="alt sm">Another customer wants this slot</button><button id="cancelMine" class="danger sm">Cancel my booking</button></div>
+      </div>
+    </section>
+  </div>
+  <div class="device">
+    <section class="device-in" aria-label="Booking assistant">
+      <div class="dev-head"><svg width="34" height="34" viewBox="0 0 40 40" role="img" aria-label="VoiceStack logo"><rect width="40" height="40" rx="12" fill="#134a45"/><path d="M8 19h5l3-7 4.5 14 3-7H31" fill="none" stroke="#b8e6cc" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="30.5" cy="31" r="3.2" fill="#e8795c"/></svg><div><b>VoiceStack</b><small>BOOKING ASSISTANT</small></div><span id="state" class="pill" style="margin-left:auto">Ready</span></div>
+      <div id="chat" class="chat" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="mic" class="mic" title="Speak (fills the box so you can edit)" aria-label="Speak" hidden>🎤</button>
+        <input id="utter" class="grow" placeholder="Type or speak, e.g. kal shaam 5 baje haircut" aria-label="What you say (editable)">
+        <button id="send" class="cta">Send</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="who" value="Sanika" class="grow" aria-label="Your name" style="max-width:130px">
+        <select id="lang" aria-label="Speech language" style="width:auto"><option value="hi-IN">Speak: हिन्दी</option><option value="en-IN">Speak: English (India)</option></select>
+        <label style="margin:0;display:flex;gap:6px;align-items:center;font-size:12.5px"><input id="tts" type="checkbox" style="width:auto"> Read replies aloud</label>
+      </div>
+      <p class="note" id="voiceNote">Voice uses your browser's built-in speech feature (best in Chrome; it may send audio to the browser vendor). The words land in the box so you can fix them before sending. Typing always works.</p>
+      <div class="promise-chip"><i></i>One slot. One confirmed booking.</div>
+    </section>
+  </div>
+</main>
+
+<!-- ================= OWNER ================= -->
+<main id="v-owner" class="grid go" hidden>
+  <div class="intro"><h2>Your shop, in your words.</h2><p>Paste a message, check the draft, publish when it is right.</p></div>
+  <div>
+    <section class="card" aria-labelledby="h-onb" style="margin-bottom:16px">
+      <h2 id="h-onb">Set up your shop</h2>
+      <label for="bname">Shop name</label><input id="bname" value="Raj Salon">
+      <label for="bdesc">Paste a message describing your services and hours</label>
+      <textarea id="bdesc" rows="3">haircut 300 30min, beard 150 60min, open 10-8, closed sunday</textarea>
+      <div class="row"><label style="margin:0" for="bchairs">Chairs</label><input id="bchairs" type="number" min="1" max="10" value="1" style="width:70px"></div>
+      <div class="row" style="margin-top:8px"><button id="draft">Extract draft</button><button id="seed" class="alt sm">Load 3 sample shops (demo; adds only once, never duplicates)</button></div>
+      <div id="preview" hidden>
+        <p class="note" style="margin-top:12px"><b>Draft preview</b> — customers cannot book yet. Check it, edit the message above and extract again if anything is wrong, then publish.</p>
+        <div class="tablewrap"><table id="ptable"></table></div>
+        <div id="pwarn"></div>
+        <div class="row" style="margin-top:10px"><button id="approve" class="cta">Approve &amp; publish</button></div>
+      </div>
+      <div id="pubOut" class="okbox" hidden></div>
+    </section>
+    <section class="card" aria-labelledby="h-aud">
+      <h2 id="h-aud">Audit log (this shop only)</h2>
+      <div id="audit" class="audit"></div>
+    </section>
+  </div>
+  <div>
+    <section class="card" aria-labelledby="h-day" style="margin-bottom:16px">
+      <h2 id="h-day">Bookings</h2>
+      <div class="row"><input id="caldate" type="date" class="grow" aria-label="Date" style="max-width:170px">
+        <div id="filters" class="row"></div></div>
+      <div id="totals" class="totals"></div>
+      <div class="tablewrap"><table id="btable"></table></div>
+      <p class="note">"Scheduled value" adds up confirmed bookings only. It is not revenue: nobody has paid or been served yet.</p>
+    </section>
+    <section class="card" aria-labelledby="h-cal">
+      <h2 id="h-cal">Day calendar</h2>
+      <div id="cal" class="cal"><div class="note" style="padding:14px">Pick or publish a shop.</div></div>
+      <p class="note"><span style="color:var(--ok)">■</span> booked &nbsp; <span style="color:var(--hold)">■</span> held (counts down)</p>
+    </section>
+  </div>
+</main>
+
+<!-- ================= DEVELOPER ================= -->
+<main id="v-developer" class="grid g3" hidden>
+  <div class="intro"><h2>Every call, in plain view.</h2><p>Real MCP calls with real outcomes. Arguments stay hidden unless you switch on the raw log.</p></div>
+  <section class="card" aria-labelledby="h-insp" style="grid-column:span 2">
+    <h2 id="h-insp">Request inspector (arguments hidden)</h2>
+    <div class="tablewrap"><table id="itable"></table></div>
+    <h2 style="margin-top:16px">Latency (browser round trip to localhost)</h2>
+    <div class="tablewrap"><table id="ltable"></table></div>
+    <p class="note">p50/p95 use the samples shown in "n". With few samples, p95 is only a rough guide. These are not Alexa+ end-to-end numbers.</p>
+    <div class="totals" id="outcomes"></div>
+    <p class="note"><b>Jobs:</b> none. Every tool finishes inside its own request, so there is no background job state to show.</p>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:10px"><input id="raw" type="checkbox" style="width:auto"> Show raw wire log (contains request data; keep off when recording a public demo)</label>
+    <div id="p-wire" class="log" hidden tabindex="0" aria-label="Raw MCP wire log"></div>
+  </section>
+  <div>
+    <section class="card" aria-labelledby="h-race" style="margin-bottom:16px">
+      <h2 id="h-race">Try to break it</h2>
+      <p class="note" style="margin-top:0">Same slot, many customers, same instant. Exactly as many may win as there are chairs.</p>
+      <div class="row"><label for="nrace" style="margin:0">Customers</label><input id="nrace" type="number" min="2" max="60" value="20" style="width:80px"><button id="race">Run the race</button></div>
+      <div class="totals" id="score" hidden>
+        <div class="stat good"><b id="sWin">0</b><span>got the slot</span></div>
+        <div class="stat badc"><b id="sLose">0</b><span>told "slot taken"</span></div>
+        <div class="stat"><b id="sExp">0</b><span>chairs</span></div>
+      </div>
+      <div id="verdict" class="note"></div><div id="racers" class="racers"></div>
+    </section>
+    <section class="card" aria-labelledby="h-srv">
+      <h2 id="h-srv">Server</h2>
+      <div id="health" class="note" style="margin:0"></div>
+      <ul id="toolList" class="tools"></ul>
+    </section>
+  </div>
+</main>
+</div>
+
+<dialog id="help" aria-labelledby="help-t">
+  <h3 id="help-t">How to use VoiceStack</h3>
+  <p class="note" style="margin-top:0">VoiceStack lets customers book local shops by voice or text, without double-bookings. Three views, one for each kind of user. Switch with the tabs at the top.</p>
+  <details id="hd-start" open><summary>Quick 2-minute tour</summary><ol>
+    <li><b>Shop owner</b> tab → <i>Load 3 sample shops</i> (or paste your own message and publish).</li>
+    <li><b>Customer</b> tab → tap a suggestion like <i>kal shaam 5 baje haircut</i>, then <i>Yes, confirm</i>.</li>
+    <li>Go back to <b>Shop owner</b>: your booking is in the table, calendar and audit log.</li>
+    <li>On <b>Customer</b>, press <i>Another customer wants this slot</i>, then <i>Cancel my booking</i>: the waiting customer is offered the slot.</li>
+    <li><b>Developer</b> tab → <i>Run the race</i> to see 20 customers fight for one slot.</li></ol></details>
+  <details id="hd-customer"><summary>Customer view</summary><ul>
+    <li>Pick a shop at the top right. Type, or press 🎤 and speak in Hindi or English; your words land in the box so you can fix them, then press Send.</li>
+    <li>The assistant needs a <b>service</b>, a <b>day</b> and a <b>time</b>. If something is missing it asks, and remembers what you already said.</li>
+    <li>It then <b>holds</b> the slot for 2 minutes and reads it back. Only <i>Yes, confirm</i> books it.</li>
+    <li>The coloured badge shows the real state: Held, Confirming, Confirmed, Hold expired, Conflict, Outcome unknown.</li>
+    <li>If the slot is taken you get free times to tap, or you can join the waitlist.</li></ul></details>
+  <details id="hd-owner"><summary>Shop owner view</summary><ul>
+    <li><b>Set up:</b> paste a message ("haircut 300 30min, open 10-8, closed sunday"), press <i>Extract draft</i>. Amber warnings tell you what was assumed. Nothing is bookable until you press <i>Approve &amp; publish</i>.</li>
+    <li><b>Bookings:</b> pick a date, filter by status, cancel a booking. Totals count only what is recorded.</li>
+    <li><b>Audit log:</b> every change for this shop, including refused attempts (slot taken, expired hold).</li></ul></details>
+  <details id="hd-developer"><summary>Developer view</summary><ul>
+    <li>Every page action is a real MCP call to <code>/mcp</code>. The inspector lists them with tool name, outcome and latency; arguments are hidden unless you tick the raw log.</li>
+    <li><i>Run the race</i> fires N parallel hold requests for one slot.</li>
+    <li>Server box: version and the 8 tools the server advertises.</li></ul></details>
+  <details id="hd-reset"><summary>Start fresh</summary><p style="font-size:14px;margin:6px 0">Stop the server (Ctrl+C), delete the <code>voicestack.db</code> file, start it again.</p></details>
+  <div class="row" style="margin-top:12px;justify-content:flex-end"><button id="helpClose">Got it</button></div>
+</dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+let rpcId = 0, inited = false, shops = [], draft = null, pend = null, last = null, myBooking = null, partial = {}, view = 'customer', filter = 'all', t0Onb = null, holdTimer = null, holdDeadline = 0, lastConfirm = null;
+const reqs = [];
+
+/* ================= MCP client + inspector ================= */
+async function rpc(method, params) {
+  const res = await fetch('/mcp', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-11-25' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcId, method, params }) });
+  const j = await res.json();
+  if (res.status === 429) banner('Too many requests from this browser. Wait a minute and try again.');
+  if (j.error) throw new Error(j.error.message);
+  return j.result;
+}
+function wlog(text, cls) { const d = el('div', cls, text); $('p-wire').append(d); while ($('p-wire').childNodes.length > 300) $('p-wire').firstChild.remove(); }
+let toolsInfo = [], protocol = '';
+async function init() {
+  if (inited) return; inited = true;
+  const r = await rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'voicestack-demo', version: '3' } });
+  protocol = r.protocolVersion; wlog('initialize → protocol ' + protocol, 'dim');
+  const t = await rpc('tools/list', {}); toolsInfo = t.tools; wlog('tools/list → ' + t.tools.map(x => x.name).join(', '), 'dim');
+  renderServer();
+}
+async function tool(name, args, quiet) {
+  await init();
+  const id = rpcId + 1, t0 = performance.now(), rec = { id, ts: new Date(), tool: name, ms: 0, outcome: 'pending' };
+  reqs.push(rec); if (reqs.length > 400) reqs.shift();
+  try {
+    const r = await rpc('tools/call', { name, arguments: args });
+    const out = r.structuredContent ? (r.structuredContent.result !== undefined ? r.structuredContent.result : r.structuredContent) : JSON.parse(r.content[0].text);
+    rec.ms = Math.round(performance.now() - t0); rec.outcome = out.ok === false ? (out.error || 'error') : 'ok';
+    wlog(`tools/call ${name}  (${rec.ms} ms)\n   ${JSON.stringify(out)}`, out.ok === false ? 'bad' : 'ok');
+    if (view === 'developer') renderDev();
+    return out;
+  } catch (e) { rec.ms = Math.round(performance.now() - t0); rec.outcome = 'network_error'; wlog(`tools/call ${name} FAILED: ${e.message}`, 'bad'); if (view === 'developer') renderDev(); throw e; }
+}
+function banner(msg) { const b = $('banner'); b.hidden = false; b.textContent = msg; }
+async function api(path, opts) {
+  let res;
+  try { res = await fetch(path, opts); } catch (e) { banner('Cannot reach the VoiceStack server. Is it still running in your terminal?'); throw e; }
+  const type = res.headers.get('content-type') || '';
+  if (res.status === 429) { banner('Too many requests from this browser. Wait a minute and try again.'); throw new Error('rate limited'); }
+  if (!res.ok || !type.includes('json')) {
+    banner(`The server answered ${res.status} for ${path}. You are probably running an OLD copy of the server. Stop it (Ctrl+C), open the NEW voicestack folder, and run: python -m voicestack.server`);
+    throw new Error('bad response ' + path);
+  }
+  return res.json();
+}
+
+/* ================= helpers ================= */
+const istDate = (plus = 0) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date(Date.now() + plus * 864e5));
+const curShop = () => shops.find(s => s.business_id === $('shop').value);
+const hm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+const toMin = s => +s.slice(0, 2) * 60 + +s.slice(3, 5);
+const rupees = p => '₹' + (p % 100 ? (p / 100).toFixed(2) : p / 100);
+function row(table, cells, head) {
+  const tr = el('tr'); cells.forEach(c => { const td = el(head ? 'th' : 'td'); if (c instanceof Node) td.append(c); else td.textContent = c == null ? '' : c; tr.append(td); }); table.append(tr); return tr;
+}
+function pct(a, p) { if (!a.length) return '–'; const s = [...a].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.ceil(p / 100 * s.length) - 1)]; }
+
+/* ================= routing + help ================= */
+function show(v) {
+  view = v;
+  ['customer', 'owner', 'developer'].forEach(x => $('v-' + x).hidden = x !== v);
+  document.querySelectorAll('nav button').forEach(b => { const on = b.dataset.view === v; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  if (location.hash !== '#' + v) history.replaceState(null, '', '#' + v);
+  if (v === 'owner') refreshOwner(); if (v === 'developer') { renderDev(); renderServer(); }
+}
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => show(b.dataset.view));
+$('helpBtn').onclick = () => { document.querySelectorAll('#help details').forEach(d => d.open = d.id === 'hd-start' || d.id === 'hd-' + view); $('help').showModal(); };
+$('helpClose').onclick = () => $('help').close();
+$('help').addEventListener('click', e => { if (e.target === $('help')) $('help').close(); });
+
+/* ================= CUSTOMER ================= */
+const STATES = { idle: ['Ready', ''], listening: ['Listening…', 'acc'], interpreting: ['Interpreting…', 'acc'], clarify: ['Needs clarification', 'hold'], loading: ['Loading slots…', 'acc'],
+  held: ['Held', 'hold'], confirming: ['Confirming…', 'acc'], confirmed: ['Confirmed', 'ok'], expired: ['Hold expired', 'bad'], conflict: ['Conflict: slot taken', 'bad'], unknown: ['Outcome unknown', 'bad'] };
+function setState(k, extra) { const [t, c] = STATES[k]; const p = $('state'); p.className = 'pill ' + c; p.textContent = t + (extra ? ' · ' + extra : ''); p.dataset.state = k; document.body.classList.toggle('listening', k === 'listening'); }
+function startHold(seconds) {
+  clearInterval(holdTimer); holdDeadline = Date.now() + seconds * 1000;
+  holdTimer = setInterval(() => {
+    const left = Math.round((holdDeadline - Date.now()) / 1000);
+    if (left > 0) { setState('held', left + 's left'); return; }
+    clearInterval(holdTimer);
+    if (pend) { setState('expired'); botSay('That hold expired, so the slot was released. Tell me again if you still want it.'); pend = null; }
+  }, 500);
+  setState('held', seconds + 's left');
+}
+function stopHold() { clearInterval(holdTimer); }
+
+function bubble(cls, who, text, actions) {
+  const m = el('div', 'msg ' + cls); m.append(el('small', '', who), document.createTextNode(text));
+  if (actions && actions.length) { const a = el('div', 'acts'); actions.forEach(x => { const b = el('button', 'sm ' + (x.cls || ''), x.label); b.onclick = () => { if (!x.keep) b.disabled = true; if (x.group) a.querySelectorAll('button').forEach(k => k.disabled = true); x.fn(); }; a.append(b); }); m.append(a); }
+  $('chat').append(m); $('chat').scrollTop = 1e9; return m;
+}
+function botSay(text, actions, who = 'Assistant', cls = 'bot') {
+  bubble(cls, who, text, actions);
+  if ($('tts').checked && 'speechSynthesis' in window) { const u = new SpeechSynthesisUtterance(text.replace(/₹(\d+)/g, '$1 rupees')); u.lang = $('lang').value; speechSynthesis.cancel(); speechSynthesis.speak(u); }
+}
+const isYes = t => /^\s*(yes|yeah|yep|ok|okay|confirm|sure|haan|han|ha|haa|theek hai|bilkul|kar do|kardo|हाँ|हां|ठीक है|कर दो)/i.test(t);
+const isNo = t => /^\s*(no|nope|nahi|nahin|na|cancel|mat|नहीं|नही|मत)/i.test(t);
+
+async function handle(text) {
+  text = text.trim(); if (!text) return;
+  bubble('me', $('who').value, text);
+  const shop = curShop(); if (!shop) { botSay('Please load or publish a shop first (Shop owner tab).'); return; }
+  if (pend && isYes(text)) return doConfirm();
+  if (pend && isNo(text)) { botSay("Okay, I won't book that. The hold frees itself shortly."); pend = null; stopHold(); setState('idle'); return; }
+  if (!pend && isNo(text)) { partial = {}; botSay('Okay, starting over. What would you like?'); setState('idle'); return; }
+  setState('interpreting');
+  const got = await api('/api/parse', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, service_names: shop.services.map(s => s.name) }) });
+  wlog('parse (rule-based, no model) → ' + JSON.stringify(got), 'dim');
+  if (partial.shop !== shop.business_id) partial = { shop: shop.business_id };
+  ['service', 'date', 'time'].forEach(k => { if (got[k]) partial[k] = got[k]; });
+  const p = { service: partial.service || null, date: partial.date || null, time: partial.time || null };
+  p.missing = ['service', 'date', 'time'].filter(k => !p[k]);
+  if (p.missing.length) {
+    setState('clarify');
+    const ask = { service: 'which service (' + shop.services.map(s => s.name).join(' / ') + ')', date: 'which day (aaj / kal / parso / Saturday)', time: 'what time (e.g. 5 baje shaam)' };
+    if (p.missing.length === 1 && p.missing[0] === 'time') {
+      setState('loading');
+      const s = await tool('get_slots', { business_id: shop.business_id, service: p.service, date: p.date }, true);
+      if (s.ok && s.slots.length) { last = { shop, p: { ...p, time: s.slots[0] }, customer: $('who').value }; setState('clarify'); botSay('What time? Free times:', slotButtons(s.slots)); return; }
+    }
+    botSay('Got it. I still need: ' + p.missing.map(k => ask[k]).join('; ') + '.'); return;
+  }
+  last = { shop, p, customer: $('who').value }; partial = {};
+  await tryHold();
+}
+function slotButtons(slots) { return slots.slice(0, 8).map(t => ({ label: t, cls: 'alt', group: 1, fn: () => { last.p.time = t; partial = {}; tryHold(); } })); }
+async function tryHold(customer = last.customer, who = 'Assistant', cls = 'bot') {
+  const { shop, p } = last; setState('loading');
+  const h = await tool('hold_slot', { business_id: shop.business_id, service: p.service, date: p.date, time: p.time, customer_name: customer });
+  if (!h.ok) {
+    const acts = [];
+    if (h.error === 'slot_taken') { setState('conflict'); acts.push({ label: 'Join waitlist', fn: () => joinWait(customer) }); } else setState('clarify');
+    const s = await tool('get_slots', { business_id: shop.business_id, service: p.service, date: p.date }, true);
+    if (s.ok && s.slots.length) acts.push(...slotButtons(s.slots));
+    botSay(h.message + (s.ok && s.slots.length ? '\nFree times:' : ''), acts, who, cls);
+    return h;
+  }
+  pend = { hold: h, key: crypto.randomUUID(), customer, shop, p };
+  startHold(h.expires_in_seconds);
+  botSay(h.read_back, [{ label: 'Yes, confirm', cls: 'cta', group: 1, fn: doConfirm }, { label: 'No', cls: 'alt', group: 1, fn: () => { botSay('Okay, dropped it.'); pend = null; stopHold(); setState('idle'); } }], who, cls);
+  return h;
+}
+async function doConfirm() {
+  if (!pend) return;
+  setState('confirming'); const cur = pend; let c;
+  try { c = await tool('confirm_booking', { hold_id: cur.hold.hold_id, idempotency_key: cur.key }); }
+  catch (e) {
+    setState('unknown'); botSay("I couldn't tell whether that was booked (network problem). Checking again with the same key, so it cannot double-book…");
+    try { c = await tool('confirm_booking', { hold_id: cur.hold.hold_id, idempotency_key: cur.key }); }
+    catch (e2) { botSay('Still not sure. Please check with the shop before relying on this booking.'); return; }
+  }
+  if (!c.ok) { setState(c.error === 'hold_expired' ? 'expired' : 'conflict'); botSay(c.message); pend = null; stopHold(); return; }
+  stopHold(); setState('confirmed'); pend = null; myBooking = c.booking_id; lastConfirm = { ...cur, c };
+  const svc = cur.shop.services.find(s => s.name === cur.p.service);
+  botSay('Booked! Your receipt is on the right. See you there.');
+  renderReceipt(c, cur, svc);
+}
+function renderReceipt(c, cur, svc) {
+  const r = $('receipt'); r.className = ''; r.textContent = '';
+  const box = el('div', 'receipt'); box.append(el('b', '', '✓ Confirmed'));
+  const dl = el('dl');
+  [['Shop', cur.shop.name], ['Service', cur.p.service + (svc ? ' (' + svc.minutes + ' min)' : '')], ['When', c.start.replace('T', ' ') + ' (India time)'],
+   ['Price', svc ? svc.price : ''], ['For', c.customer], ['Booking ID', c.booking_id]].forEach(([k, v]) => { dl.append(el('dt', '', k), el('dd', '', v)); });
+  box.append(dl); r.append(box); $('tryit').hidden = false; $('cancelMine').disabled = false;
+}
+$('retry').onclick = async () => {
+  if (!lastConfirm) return;
+  const r = await tool('confirm_booking', { hold_id: lastConfirm.hold.hold_id, idempotency_key: lastConfirm.key });
+  botSay(r.replayed ? 'Same booking returned (' + r.booking_id.slice(0, 8) + '…). No duplicate was created.' : (r.message || 'Done.'));
+};
+$('cancelMine').onclick = async () => {
+  const c = await tool('cancel_booking', { booking_id: myBooking });
+  botSay(c.ok ? 'Cancelled. The slot is free again.' + (c.waitlist_offered ? ' The next person on the waitlist has just been offered it.' : '') : c.message);
+  if (c.ok) { const r = $('receipt'); r.className = 'note'; r.textContent = 'Booking cancelled.'; $('cancelMine').disabled = true; setState('idle'); }
+};
+$('rival').onclick = async () => {
+  if (!last) return;
+  botSay('Rahul asks for the same slot…', null, 'Rahul', 'other');
+  const h = await tool('hold_slot', { business_id: last.shop.business_id, service: last.p.service, date: last.p.date, time: last.p.time, customer_name: 'Rahul' });
+  if (h.ok) { botSay('(He got a hold because there was a free chair.)', null, 'Rahul', 'other'); return; }
+  botSay(h.message + ' Joining the waitlist for him.', null, 'Rahul', 'other');
+  joinWait('Rahul', true);
+};
+async function joinWait(customer, silent) {
+  const { shop, p } = last;
+  const w = await tool('join_waitlist', { business_id: shop.business_id, service: p.service, date: p.date, time: p.time, customer_name: customer });
+  if (!w.ok) { botSay(w.message); return; }
+  if (!silent) botSay("You're on the waitlist. If someone cancels, you'll get a 2-minute offer.", null, customer);
+  const mine = customer !== $('who').value; let n = 0;
+  const iv = setInterval(async () => {
+    if (++n > 120) { clearInterval(iv); return; }
+    const c = await tool('check_waitlist', { waitlist_id: w.waitlist_id }, true).catch(() => ({}));
+    if (c.state === 'offered') {
+      clearInterval(iv);
+      pend = { hold: c, key: crypto.randomUUID(), customer, shop, p }; startHold(c.expires_in_seconds);
+      botSay(c.read_back, [{ label: 'Yes, confirm', cls: 'cta', fn: doConfirm }], customer, mine ? 'other' : 'bot');
+    } else if (c.state === 'expired' || c.state === 'booked') clearInterval(iv);
+  }, 1500);
+}
+function renderShops() {
+  const box = $('shopCards'); box.textContent = '';
+  if (!shops.length) { box.append(el('div', 'note', 'No shops yet. Open the Shop owner tab and load the samples or publish your own.')); return; }
+  shops.forEach(s => {
+    const c = el('div', 'shop' + (s.business_id === $('shop').value ? ' sel' : '')); c.tabIndex = 0;
+    c.append(el('b', '', s.name), el('span', '', `${s.hours} · closed ${s.closed.join('/') || 'never'} · ${s.chairs} chair(s)`), el('br'),
+      el('span', '', s.services.map(x => `${x.name} ${x.price} (${x.minutes} min)`).join(' · ')));
+    const pick = () => { $('shop').value = s.business_id; onShopChange(); };
+    c.onclick = pick; c.onkeydown = e => { if (e.key === 'Enter') pick(); }; box.append(c);
+  });
+}
+function renderChips() {
+  const s = curShop(); $('chips').textContent = ''; if (!s) return;
+  const svc = s.services.map(x => x.name);
+  [`kal shaam 5 baje ${svc[0]}`, `parso subah 11 baje ${svc[svc.length - 1]}`, `book ${svc[0]} tomorrow 4:30 pm`].forEach(t => { const c = el('button', 'chip', t); c.onclick = () => { $('utter').value = t; $('send').click(); }; $('chips').append(c); });
+}
+$('send').onclick = () => { const t = $('utter').value; $('utter').value = ''; handle(t); };
+$('utter').addEventListener('keydown', e => { if (e.key === 'Enter') $('send').click(); });
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SR) {
+  $('mic').hidden = false; let rec = null;
+  $('mic').onclick = () => {
+    if (rec) { rec.stop(); return; }
+    rec = new SR(); rec.lang = $('lang').value; rec.interimResults = false; rec.maxAlternatives = 1;
+    rec.onstart = () => { $('mic').classList.add('on'); setState('listening'); };
+    rec.onresult = e => { $('utter').value = e.results[0][0].transcript; $('utter').focus(); };   // editable transcript: user presses Send
+    rec.onerror = e => botSay('Could not hear that (' + e.error + '). You can type instead.');
+    rec.onend = () => { $('mic').classList.remove('on'); rec = null; if ($('state').dataset.state === 'listening') setState('idle'); };
+    rec.start();
+  };
+} else $('voiceNote').textContent = 'This browser has no built-in speech recognition, so the mic is off. Typing works. Chrome supports voice.';
+
+/* ================= OWNER ================= */
+$('seed').onclick = async () => { await init(); const r = await api('/api/seed', { method: 'POST' }); wlog('POST /api/seed (demo-only) → created ' + JSON.stringify(r.created), 'dim'); await loadShops(); };
+$('draft').onclick = async () => {
+  if (!t0Onb) t0Onb = performance.now();
+  const d = await tool('onboard_business', { name: $('bname').value, description: $('bdesc').value, resources: +$('bchairs').value || 1 });
+  $('pubOut').hidden = true;
+  if (!d.ok) { $('preview').hidden = false; $('ptable').textContent = ''; $('approve').hidden = true; $('pwarn').textContent = ''; $('pwarn').append(el('div', 'warn', d.message)); return; }
+  draft = d; $('approve').hidden = false; $('preview').hidden = false;
+  const x = d.draft, t = $('ptable'); t.textContent = '';
+  row(t, ['Service', 'Price', 'Minutes'], true); x.services.forEach(s => row(t, [s.name, s.price, s.minutes]));
+  row(t, [el('b', '', 'Hours'), x.hours, ''], false); row(t, [el('b', '', 'Closed'), x.closed.join(', ') || 'never', '']); row(t, [el('b', '', 'Chairs'), x.chairs, '']);
+  const w = $('pwarn'); w.textContent = '';
+  (d.warnings || []).forEach(m => w.append(el('div', 'warn', '⚠ ' + m)));
+  if (!(d.warnings || []).length) w.append(el('div', 'okbox', 'Nothing was assumed. Everything above came from your message.'));
+};
+$('approve').onclick = async () => {
+  const r = await tool('onboard_business', { business_id: draft.business_id, approve_code: draft.approve_code });
+  if (!r.ok) return;
+  const secs = t0Onb ? ((performance.now() - t0Onb) / 1000).toFixed(1) : '?'; t0Onb = null;
+  $('preview').hidden = true; const o = $('pubOut'); o.hidden = false; o.textContent = `✓ Bookable in VoiceStack. Published ${secs} s after the first extract (includes your reading time).`;
+  await loadShops(r.business_id);
+};
+function statusOf(it) { return it.kind === 'hold' ? 'held' : it.state; }
+async function refreshOwner() {
+  const s = curShop(); if (!s) return;
+  const date = $('caldate').value; if (!date) return;
+  let v, a;
+  try { [v, a] = await Promise.all([api(`/api/day?business_id=${encodeURIComponent(s.business_id)}&date=${date}`), api(`/api/audit?business_id=${encodeURIComponent(s.business_id)}&limit=40`)]); } catch (e) { return; }
+  if (!v.ok) return;
+  const items = v.items.slice().sort((p, q) => p.start.localeCompare(q.start));
+  const n = k => items.filter(i => statusOf(i) === k).length, conf = items.filter(i => statusOf(i) === 'confirmed');
+  const tot = $('totals'); tot.textContent = '';
+  [['confirmed', n('confirmed'), 'good'], ['held', n('held'), ''], ['cancelled', n('cancelled'), ''], ['waiting', v.waiting, ''], ['scheduled value', rupees(conf.reduce((x, i) => x + (i.price_paise || 0), 0)), '']]
+    .forEach(([k, val, c]) => { const d = el('div', 'stat ' + c); d.append(el('b', '', String(val)), el('span', '', k)); tot.append(d); });
+  const f = $('filters'); if (!f.childNodes.length) ['all', 'confirmed', 'held', 'cancelled'].forEach(k => { const b = el('button', 'chip', k); b.onclick = () => { filter = k; refreshOwner(); }; b.dataset.f = k; f.append(b); });
+  f.querySelectorAll('button').forEach(b => { b.style.borderColor = b.dataset.f === filter ? 'var(--acc)' : ''; b.style.fontWeight = b.dataset.f === filter ? '700' : '500'; });
+  const bt = $('btable'); bt.textContent = ''; row(bt, ['Time', 'Service', 'Customer', 'Status', 'Chair', ''], true);
+  const shown = items.filter(i => filter === 'all' || statusOf(i) === filter);
+  if (v.closed) row(bt, ['Closed this day', '', '', '', '', '']); else if (!shown.length) row(bt, ['No bookings match.', '', '', '', '', '']);
+  shown.forEach(i => {
+    let act = '';
+    if (i.kind === 'booking' && i.state === 'confirmed') { act = el('button', 'danger sm', 'Cancel'); act.onclick = async () => { act.disabled = true; await tool('cancel_booking', { booking_id: i.id }); refreshOwner(); }; }
+    row(bt, [i.start, i.service, i.customer, statusOf(i) + (i.kind === 'hold' ? ` (${i.expires_in}s)` : ''), i.chair, act]);
+  });
+  drawCal(v);
+  const au = $('audit'); au.textContent = '';
+  const L = { published: 'Shop published', draft_created: 'Draft created', held: 'Slot held', confirmed: 'Booking confirmed', cancelled: 'Booking cancelled', hold_expired: 'Hold expired',
+    waitlist_joined: 'Joined waitlist', waitlist_offer: 'Waitlist offer made', rejected_slot_taken: 'REJECTED: slot already taken', rejected_unavailable: 'REJECTED: outside hours or in the past',
+    rejected_confirm_expired: 'REJECTED: confirm after hold expired', rejected_confirm_confirmed: 'REJECTED: hold already used', rejected_confirm_expired_: '' };
+  if (!a.events || !a.events.length) au.append(el('div', 'note', 'Nothing recorded yet.'));
+  (a.events || []).forEach(e => { const d = el('div', e.event.startsWith('rejected') ? 'rej' : ''); d.append(el('time', '', e.ts.slice(11)), document.createTextNode((L[e.event] || e.event) + (e.service ? ` · ${e.service}` : '') + (e.start ? ` · ${e.start.replace('T', ' ')}` : ''))); au.append(d); });
+}
+const PX = 22;
+function drawCal(v) {
+  const cal = $('cal'); cal.textContent = '';
+  if (v.closed) { const n = el('div', 'note', 'Closed this day.'); n.style.padding = '14px'; cal.style.height = 'auto'; cal.append(n); return; }
+  const rows = (v.close_min - v.open_min) / 30; cal.style.height = rows * PX + 'px';
+  for (let i = 0; i < rows; i += 2) { const h = el('div', 'hr', hm(v.open_min + i * 30)); h.style.top = i * PX + 'px'; cal.append(h); }
+  const left = 44, width = (cal.clientWidth - left - 6) / v.chairs;
+  v.items.forEach(it => {
+    const top = (toMin(it.start) - v.open_min) / 30 * PX, h = it.minutes / 30 * PX - 2;
+    const b = el('div', 'blk ' + it.kind + (it.state === 'cancelled' ? ' cancelled' : ''), `${it.customer} · ${it.service}` + (it.kind === 'hold' ? ` · ${it.expires_in}s` : ''));
+    b.style.cssText = `top:${top + 1}px;height:${h}px;left:${left + (it.chair - 1) * width}px;width:${width - 4}px`; cal.append(b);
+  });
+}
+$('caldate').onchange = refreshOwner;
+
+/* ================= DEVELOPER ================= */
+function renderDev() {
+  const it = $('itable'); it.textContent = ''; row(it, ['#', 'Time', 'Tool', 'Outcome', 'ms'], true);
+  reqs.slice(-30).reverse().forEach(r => row(it, [r.id, r.ts.toTimeString().slice(0, 8), r.tool, r.outcome, r.ms]).children[3].className = r.outcome === 'ok' ? 'ok' : (r.outcome === 'pending' ? '' : 'bad'));
+  if (!reqs.length) row(it, ['No calls yet. Use the Customer or Shop owner tab.', '', '', '', '']);
+  const lt = $('ltable'); lt.textContent = ''; row(lt, ['Tool', 'n', 'p50 ms', 'p95 ms', 'max ms'], true);
+  const by = {}; reqs.filter(r => r.outcome !== 'pending').forEach(r => (by[r.tool] = by[r.tool] || []).push(r.ms));
+  Object.keys(by).sort().forEach(k => row(lt, [k, by[k].length, pct(by[k], 50), pct(by[k], 95), Math.max(...by[k])]));
+  const done = reqs.filter(r => r.outcome !== 'pending'), cnt = f => done.filter(f).length, o = $('outcomes'); o.textContent = '';
+  [['calls', done.length, ''], ['ok', cnt(r => r.outcome === 'ok'), 'good'], ['slot conflicts', cnt(r => r.outcome === 'slot_taken'), 'badc'], ['expired holds', cnt(r => /expired/.test(r.outcome)), 'badc'], ['other errors', cnt(r => r.outcome !== 'ok' && r.outcome !== 'slot_taken' && !/expired/.test(r.outcome)), 'badc']]
+    .forEach(([k, v, c]) => { const d = el('div', 'stat ' + c); d.append(el('b', '', String(v)), el('span', '', k)); o.append(d); });
+}
+async function renderServer() {
+  const ul = $('toolList'); ul.textContent = '';
+  toolsInfo.forEach(t => { const li = el('li'); li.append(el('b', '', t.name), document.createTextNode(' — ' + ((t.description || '').replace(/\s+/g, ' ').split('. ')[0]))); ul.append(li); });
+  try { const h = await api('/api/health'); $('health').textContent = `Server version ${h.version} · ${h.tools} tools · MCP protocol ${protocol || '…'} · Streamable HTTP, stateless JSON at /mcp`; } catch (e) {}
+}
+$('raw').onchange = () => $('p-wire').hidden = !$('raw').checked;
+$('race').onclick = async () => {
+  const s = curShop(); if (!s) { alert('Load a shop first.'); return; }
+  const date = $('caldate').value, n = Math.max(2, Math.min(60, +$('nrace').value || 20)), svc = s.services[0].name;
+  $('race').disabled = true; $('racers').textContent = ''; $('verdict').textContent = '';
+  const sl = await tool('get_slots', { business_id: s.business_id, service: svc, date }, true);
+  if (!sl.ok || !sl.slots.length) { $('verdict').textContent = 'No free ' + svc + ' slot on ' + date + '. Change the date in the Shop owner tab.'; $('race').disabled = false; return; }
+  const time = sl.slots[Math.floor(sl.slots.length / 2)], t0 = performance.now();
+  const res = await Promise.all(Array.from({ length: n }, (_, i) => tool('hold_slot', { business_id: s.business_id, service: svc, date, time, customer_name: 'Racer ' + (i + 1) })));
+  const ms = Math.round(performance.now() - t0), wins = res.filter(r => r.ok).length, chairs = s.chairs || 1;
+  res.forEach((r, i) => $('racers').append(el('div', 'racer ' + (r.ok ? 'win' : 'lose'), `Racer ${i + 1} ${r.ok ? '✓ won' : '✗ taken'}`)));
+  $('score').hidden = false; $('sWin').textContent = wins; $('sLose').textContent = n - wins; $('sExp').textContent = chairs;
+  $('verdict').textContent = wins === chairs ? `✓ Exactly ${chairs} winner(s) out of ${n} simultaneous requests (${ms} ms in total, browser to localhost). No double-booking.` : `✗ Unexpected: ${wins} winners for ${chairs} chair(s).`;
+  $('race').disabled = false; renderDev();
+};
+
+/* ================= shops + boot ================= */
+async function loadShops(selectId) {
+  const r = await tool('find_businesses', {}, true);
+  shops = r.businesses || [];
+  const sel = $('shop'); const keep = sel.value; sel.textContent = '';
+  shops.forEach(s => sel.append(new Option(s.name, s.business_id)));
+  if (!shops.length) sel.append(new Option('No shops yet', ''));
+  sel.value = selectId || (shops.find(s => s.business_id === keep) ? keep : (shops[0] && shops[0].business_id) || '');
+  onShopChange();
+}
+function onShopChange() { renderShops(); renderChips(); partial = {}; if (view === 'owner') refreshOwner(); }
+$('shop').onchange = onShopChange;
+$('caldate').value = istDate(1);
+api('/api/health').then(h => { if (h.version < 3) banner('Old server version. Please restart from the new folder.'); }).catch(() => {});
+init().then(() => loadShops()).catch(e => { wlog('Cannot reach /mcp: ' + e.message, 'bad'); banner('Cannot reach the MCP endpoint. Is the server running?'); });
+setInterval(() => { if (view === 'owner') refreshOwner().catch(() => {}); }, 2000);
+const start = (location.hash || '#customer').slice(1);
+show(['customer', 'owner', 'developer'].includes(start) ? start : 'customer');
+window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (['customer', 'owner', 'developer'].includes(v) && v !== view) show(v); });
+botSay('Hi! First open the Shop owner tab and load the sample shops (or publish your own). Then tell me what you want, like "kal shaam 5 baje haircut". Tap the ? at the top for a quick tour.');
+try { if (!localStorage.getItem('vs_help_seen')) { localStorage.setItem('vs_help_seen', '1'); setTimeout(() => $('helpBtn').click(), 600); } } catch (e) {}
+</script>
+</body>
+</html>
