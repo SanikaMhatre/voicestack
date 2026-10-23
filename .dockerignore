@@ -1,9 +1,0 @@
-.git
-.github
-.venv
-__pycache__
-*.db
-*.db-*
-tests
-docs
-scripts
